@@ -4,14 +4,11 @@
 # 项目描述：对web url进行定期拨测，拨测结果如果有需要可以记录到数据看，并且可以自动发送告警邮件
 # 作者：邵壮丰
 # 时间：2020年3月15日
+# 使用方法，下载该py文件，在同目录下增加拨测的url清单、邮箱地址清单
 
 # 
 import requests,time,re,datetime
 import pandas as pd
-
-#如果需要保存到数据库的话，使用下面一行倒入配置
-#from sqlalchemy import create_engine
-# from config import db_uri 
 
 import asyncio 
 from email.message import EmailMessage
@@ -28,14 +25,9 @@ pd.set_option('max_colwidth',200)
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('colheader_justify', 'right')
 
-# 这个特殊函数，用于串行对web url进行拨测，每次只采集一个url 
-# @asyncio.coroutine 这是老的写法，参考https://www.liaoxuefeng.com/wiki/1016959663602400/1048430311230688
+# 单次拨测
 async def test_url(url):
 	test_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-	# 由于为了在打印出来的url中增加url的名称或联系人等信息，因此函数传进来的一个没有预处理的完整文本行，
-	# 下面使用正则表达式实现把其中的url“http”开头的子串取出来,记录为val_url(有效的url的意思)，送入到requests.get中
-	# 然后在输出或者返回中，仍然把原始的url完整串返回或打印
-	# #group()是取正则对象的值,参考https://www.runoob.com/python/python-reg-expressions.html，http 开头字符 \S 任意字符 *多个字符，r'http\S*' 目标patten
 	val_url = re.search(r'http\S*',url).group() 
 
 	timeout = aiohttp.ClientTimeout(total=2) #设置超时时间
@@ -60,16 +52,15 @@ async def banch_test_url(loop,urls):
 # 把拨测结果自动发送邮件，mess_cont是外部引入的要发送的内容
 async def auto_sent_mail(mess_cont,mail_to):
     message = EmailMessage()
-    message["From"] = "xyzszf@163.com"
+    message["From"] = "" #发送拨测结果的邮箱
     message["To"] = mail_to
-    message["Subject"] = "广东电信IPTV WEB拨测告警"
-    # message.set_content("Sent via aiosmtplib")
+    message["Subject"] = "WEB NPS 拨测结果"
     message.set_content(mess_cont)
 
     #设置smtp参数
     await aiosmtplib.send(message,
-        hostname="smtp.163.com",
-        port=465, 
+        hostname="", #smtp地址
+        port=465, #smtp port
         use_tls=True, #不加密，这项去掉
         username= "", #邮箱地址
         password = "" #smtp密码
